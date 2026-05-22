@@ -3,20 +3,24 @@ info:
   # Do not change the title, if the title changes, the import paths will be broken
   title: Api
   version: 0.1.0
-  description: API specification
+  description: Enterprise Expense Analytics API
 servers:
   - url: /api
     description: Base API path
 tags:
   - name: health
     description: Health operations
+  - name: expenses
+    description: Expense data and analytics
+  - name: upload
+    description: File upload operations
+
 paths:
   /healthz:
     get:
       operationId: healthCheck
       tags: [health]
       summary: Health check
-      description: Returns server health status
       responses:
         "200":
           description: Healthy
@@ -24,13 +28,575 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/HealthStatus"
+
+  /expenses:
+    get:
+      operationId: listExpenses
+      tags: [expenses]
+      summary: List expenses with pagination and filtering
+      parameters:
+        - name: page
+          in: query
+          schema: { type: integer, default: 1 }
+        - name: limit
+          in: query
+          schema: { type: integer, default: 50 }
+        - name: department
+          in: query
+          schema: { type: string }
+        - name: vendor
+          in: query
+          schema: { type: string }
+        - name: category
+          in: query
+          schema: { type: string }
+        - name: is_personal
+          in: query
+          schema: { type: boolean }
+        - name: is_flagged
+          in: query
+          schema: { type: boolean }
+        - name: search
+          in: query
+          schema: { type: string }
+        - name: date_from
+          in: query
+          schema: { type: string }
+        - name: date_to
+          in: query
+          schema: { type: string }
+      responses:
+        "200":
+          description: Paginated list of expenses
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ExpensePage"
+
+  /expenses/summary:
+    get:
+      operationId: getExpenseSummary
+      tags: [expenses]
+      summary: Dashboard summary KPIs
+      responses:
+        "200":
+          description: Summary statistics
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ExpenseSummary"
+
+  /expenses/monthly-trend:
+    get:
+      operationId: getMonthlyTrend
+      tags: [expenses]
+      summary: Monthly spend trend
+      responses:
+        "200":
+          description: Monthly spend data
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/MonthlySpend"
+
+  /expenses/by-department:
+    get:
+      operationId: getSpendByDepartment
+      tags: [expenses]
+      summary: Spend grouped by canonical department
+      responses:
+        "200":
+          description: Department spend breakdown
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/DepartmentSpend"
+
+  /expenses/by-vendor:
+    get:
+      operationId: getSpendByVendor
+      tags: [expenses]
+      summary: Top vendors by total spend
+      parameters:
+        - name: limit
+          in: query
+          schema: { type: integer, default: 20 }
+      responses:
+        "200":
+          description: Vendor spend breakdown
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/VendorSpend"
+
+  /expenses/by-category:
+    get:
+      operationId: getSpendByCategory
+      tags: [expenses]
+      summary: Spend grouped by AI-classified expense category
+      responses:
+        "200":
+          description: Category breakdown
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/CategorySpend"
+
+  /expenses/by-cost-center:
+    get:
+      operationId: getSpendByCostCenter
+      tags: [expenses]
+      summary: Spend grouped by cost center
+      responses:
+        "200":
+          description: Cost center breakdown
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/CostCenterSpend"
+
+  /expenses/personal-analysis:
+    get:
+      operationId: getPersonalExpenseAnalysis
+      tags: [expenses]
+      summary: Personal expense analysis — top offenders, vendors, policy violations
+      responses:
+        "200":
+          description: Personal expense analysis
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/PersonalExpenseAnalysis"
+
+  /expenses/vendor-analysis:
+    get:
+      operationId: getVendorAnalysis
+      tags: [expenses]
+      summary: Detailed vendor analysis with SaaS concentration and risk
+      responses:
+        "200":
+          description: Vendor analysis
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/VendorAnalysis"
+
+  /expenses/currency-analysis:
+    get:
+      operationId: getCurrencyAnalysis
+      tags: [expenses]
+      summary: Currency distribution and forex exposure analysis
+      responses:
+        "200":
+          description: Currency analysis
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/CurrencyAnalysis"
+
+  /expenses/data-quality:
+    get:
+      operationId: getDataQuality
+      tags: [expenses]
+      summary: Data quality report — missing values, excluded rows, issue counts
+      responses:
+        "200":
+          description: Data quality metrics
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/DataQualityReport"
+
+  /expenses/fraud-anomalies:
+    get:
+      operationId: getFraudAnomalies
+      tags: [expenses]
+      summary: Fraud and anomaly detection results
+      responses:
+        "200":
+          description: Fraud and anomaly data
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/FraudAnomalyReport"
+
+  /expenses/executive-summary:
+    get:
+      operationId: getExecutiveSummary
+      tags: [expenses]
+      summary: AI-generated executive audit summary with key findings and recommendations
+      responses:
+        "200":
+          description: Executive summary
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ExecutiveSummary"
+
+  /expenses/receipt-compliance:
+    get:
+      operationId: getReceiptCompliance
+      tags: [expenses]
+      summary: Receipt attachment compliance breakdown
+      responses:
+        "200":
+          description: Receipt compliance data
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ReceiptCompliance"
+
+  /upload:
+    post:
+      operationId: uploadExpenseFile
+      tags: [upload]
+      summary: Upload a dirty expense file for processing
+      requestBody:
+        required: true
+        content:
+          multipart/form-data:
+            schema:
+              $ref: "#/components/schemas/ExpenseFileUpload"
+      responses:
+        "200":
+          description: Upload and processing result
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/UploadResult"
+
 components:
   schemas:
     HealthStatus:
       type: object
+      required: [status]
       properties:
-        status:
-          type: string
-      required:
-        - status
+        status: { type: string }
 
+    Expense:
+      type: object
+      required: [txn_id, amount_inr, vendor_canonical, department, category, is_personal, is_flagged]
+      properties:
+        txn_id: { type: string }
+        submission_date: { type: ["string", "null"] }
+        txn_date: { type: ["string", "null"] }
+        amount_inr: { type: number }
+        original_currency: { type: ["string", "null"] }
+        amount_numeric: { type: ["number", "null"] }
+        exchange_rate_used: { type: ["number", "null"] }
+        vendor_canonical: { type: string }
+        vendor_raw: { type: ["string", "null"] }
+        description: { type: ["string", "null"] }
+        department: { type: string }
+        cost_center: { type: ["string", "null"] }
+        submitted_by: { type: ["string", "null"] }
+        receipt_attached: { type: ["string", "null"] }
+        approval_status: { type: ["string", "null"] }
+        category: { type: ["string", "null"] }
+        category_confidence: { type: ["number", "null"] }
+        is_personal: { type: boolean }
+        is_flagged: { type: boolean }
+        flag_reason: { type: ["string", "null"] }
+        is_duplicate: { type: boolean }
+        under_review: { type: boolean }
+        notes: { type: ["string", "null"] }
+
+    ExpensePage:
+      type: object
+      required: [data, total, page, limit]
+      properties:
+        data:
+          type: array
+          items:
+            $ref: "#/components/schemas/Expense"
+        total: { type: integer }
+        page: { type: integer }
+        limit: { type: integer }
+
+    ExpenseSummary:
+      type: object
+      required: [total_transactions, total_spend_inr, personal_expense_count, personal_expense_inr, flagged_count, under_review_count, avg_transaction_inr, unique_vendors, unique_departments, missing_receipt_count, missing_receipt_pct, negative_transaction_count, missing_submitter_count, all_pending_approvals, currencies_count, report_date, source_rows, rows_loaded, rows_excluded]
+      properties:
+        total_transactions: { type: integer }
+        total_spend_inr: { type: number }
+        personal_expense_count: { type: integer }
+        personal_expense_inr: { type: number }
+        flagged_count: { type: integer }
+        under_review_count: { type: integer }
+        avg_transaction_inr: { type: number }
+        unique_vendors: { type: integer }
+        unique_departments: { type: integer }
+        missing_receipt_count: { type: integer }
+        missing_receipt_pct: { type: number }
+        negative_transaction_count: { type: integer }
+        missing_submitter_count: { type: integer }
+        all_pending_approvals: { type: integer }
+        currencies_count: { type: integer }
+        report_date: { type: string }
+        source_rows: { type: integer }
+        rows_loaded: { type: integer }
+        rows_excluded: { type: integer }
+
+    MonthlySpend:
+      type: object
+      required: [month, spend_inr, transaction_count]
+      properties:
+        month: { type: string }
+        spend_inr: { type: number }
+        transaction_count: { type: integer }
+
+    DepartmentSpend:
+      type: object
+      required: [department, spend_inr, transaction_count]
+      properties:
+        department: { type: string }
+        spend_inr: { type: number }
+        transaction_count: { type: integer }
+        personal_count: { type: integer }
+
+    VendorSpend:
+      type: object
+      required: [vendor, spend_inr, transaction_count]
+      properties:
+        vendor: { type: string }
+        spend_inr: { type: number }
+        transaction_count: { type: integer }
+        personal_count: { type: integer }
+
+    CategorySpend:
+      type: object
+      required: [category, spend_inr, transaction_count]
+      properties:
+        category: { type: string }
+        spend_inr: { type: number }
+        transaction_count: { type: integer }
+
+    CostCenterSpend:
+      type: object
+      required: [cost_center, spend_inr, transaction_count]
+      properties:
+        cost_center: { type: string }
+        spend_inr: { type: number }
+        transaction_count: { type: integer }
+
+    PersonalExpenseAnalysis:
+      type: object
+      required: [total_count, total_inr, pct_of_transactions, top_offenders, top_personal_vendors, policy_violations]
+      properties:
+        total_count: { type: integer }
+        total_inr: { type: number }
+        pct_of_transactions: { type: number }
+        top_offenders:
+          type: array
+          items:
+            $ref: "#/components/schemas/EmployeePersonalCount"
+        top_personal_vendors:
+          type: array
+          items:
+            $ref: "#/components/schemas/VendorPersonalCount"
+        policy_violations:
+          type: array
+          items:
+            $ref: "#/components/schemas/PolicyViolation"
+
+    EmployeePersonalCount:
+      type: object
+      required: [employee, count]
+      properties:
+        employee: { type: string }
+        count: { type: integer }
+        total_inr: { type: number }
+
+    VendorPersonalCount:
+      type: object
+      required: [vendor, count]
+      properties:
+        vendor: { type: string }
+        count: { type: integer }
+
+    PolicyViolation:
+      type: object
+      required: [severity, title, description]
+      properties:
+        severity: { type: string }
+        title: { type: string }
+        description: { type: string }
+
+    VendorAnalysis:
+      type: object
+      required: [top_vendors_by_spend, saas_vendors, vendor_concentration, risk_insights]
+      properties:
+        top_vendors_by_spend:
+          type: array
+          items:
+            $ref: "#/components/schemas/VendorSpend"
+        saas_vendors:
+          type: array
+          items:
+            $ref: "#/components/schemas/VendorSpend"
+        vendor_concentration:
+          type: array
+          items:
+            $ref: "#/components/schemas/VendorSpend"
+        risk_insights:
+          type: array
+          items:
+            $ref: "#/components/schemas/RiskInsight"
+
+    RiskInsight:
+      type: object
+      required: [type, title, description]
+      properties:
+        type: { type: string }
+        title: { type: string }
+        description: { type: string }
+
+    CurrencyAnalysis:
+      type: object
+      required: [currency_breakdown, inr_pct, foreign_pct, missing_exchange_rate_count, insights]
+      properties:
+        currency_breakdown:
+          type: array
+          items:
+            $ref: "#/components/schemas/CurrencyBreakdown"
+        inr_pct: { type: number }
+        foreign_pct: { type: number }
+        missing_exchange_rate_count: { type: integer }
+        insights:
+          type: array
+          items:
+            { type: string }
+
+    CurrencyBreakdown:
+      type: object
+      required: [currency, count, spend_inr]
+      properties:
+        currency: { type: string }
+        count: { type: integer }
+        spend_inr: { type: number }
+
+    DataQualityReport:
+      type: object
+      required: [total_source_rows, rows_loaded, rows_excluded, critical_issues, warning_issues, info_issues, missing_values_by_field, erp_readiness_score, top_issues]
+      properties:
+        total_source_rows: { type: integer }
+        rows_loaded: { type: integer }
+        rows_excluded: { type: integer }
+        critical_issues: { type: integer }
+        warning_issues: { type: integer }
+        info_issues: { type: integer }
+        missing_values_by_field:
+          type: array
+          items:
+            $ref: "#/components/schemas/FieldMissingCount"
+        erp_readiness_score: { type: number }
+        top_issues:
+          type: array
+          items:
+            $ref: "#/components/schemas/QualityIssue"
+
+    FieldMissingCount:
+      type: object
+      required: [field, missing_count, missing_pct]
+      properties:
+        field: { type: string }
+        missing_count: { type: integer }
+        missing_pct: { type: number }
+
+    QualityIssue:
+      type: object
+      required: [issue_type, count, severity]
+      properties:
+        issue_type: { type: string }
+        count: { type: integer }
+        severity: { type: string }
+
+    FraudAnomalyReport:
+      type: object
+      required: [high_value_outliers, refund_transactions, approval_bypass, duplicate_suspects, risk_score, anomaly_insights]
+      properties:
+        high_value_outliers:
+          type: array
+          items:
+            $ref: "#/components/schemas/Expense"
+        refund_transactions:
+          type: array
+          items:
+            $ref: "#/components/schemas/Expense"
+        approval_bypass:
+          type: array
+          items:
+            $ref: "#/components/schemas/Expense"
+        duplicate_suspects: { type: integer }
+        risk_score: { type: number }
+        anomaly_insights:
+          type: array
+          items:
+            $ref: "#/components/schemas/RiskInsight"
+
+    ExecutiveSummary:
+      type: object
+      required: [overall_risk_score, governance_status, key_findings, major_risks, recommendations, action_items]
+      properties:
+        overall_risk_score: { type: number }
+        governance_status: { type: string }
+        key_findings:
+          type: array
+          items: { type: string }
+        major_risks:
+          type: array
+          items:
+            $ref: "#/components/schemas/RiskInsight"
+        recommendations:
+          type: array
+          items: { type: string }
+        action_items:
+          type: array
+          items:
+            $ref: "#/components/schemas/ActionItem"
+
+    ActionItem:
+      type: object
+      required: [priority, title, description]
+      properties:
+        priority: { type: string }
+        title: { type: string }
+        description: { type: string }
+
+    ReceiptCompliance:
+      type: object
+      required: [attached_count, missing_count, unknown_count, attached_pct, missing_pct, unknown_pct]
+      properties:
+        attached_count: { type: integer }
+        missing_count: { type: integer }
+        unknown_count: { type: integer }
+        attached_pct: { type: number }
+        missing_pct: { type: number }
+        unknown_pct: { type: number }
+
+    ExpenseFileUpload:
+      type: object
+      required: [filename]
+      properties:
+        filename:
+          type: string
+
+    UploadResult:
+      type: object
+      required: [success, rows_processed, rows_loaded, rows_excluded, message]
+      properties:
+        success: { type: boolean }
+        rows_processed: { type: integer }
+        rows_loaded: { type: integer }
+        rows_excluded: { type: integer }
+        message: { type: string }

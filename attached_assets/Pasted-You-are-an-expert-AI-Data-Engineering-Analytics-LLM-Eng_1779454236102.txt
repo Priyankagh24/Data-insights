@@ -1,0 +1,514 @@
+You are an expert AI Data Engineering, Analytics, LLM Engineering, and Full Stack Development assistant.
+
+Build a COMPLETE AI-Powered Enterprise Expense Intelligence Platform.
+
+The application must allow users to upload a dirty enterprise expense Excel sheet and automatically perform:
+
+Data Cleaning
+Data Validation
+Duplicate Detection
+Vendor Normalization
+LLM-Based Expense Classification
+Fraud & Risk Detection
+AI Insight Generation
+Executive Reporting
+Interactive Analytics Dashboard
+
+The final application should look like a premium enterprise analytics platform similar to:
+
+Power BI
+Tableau
+Stripe Analytics
+SAP Analytics
+Deloitte / EY / PwC Governance Dashboards
+
+The UI must be modern, polished, responsive, visually premium, and enterprise-grade.
+
+PROJECT BACKGROUND
+
+The uploaded dataset is a dirty enterprise expense sheet containing:
+
+duplicate rows
+missing values
+inconsistent vendor names
+inconsistent department names
+invalid currencies
+noisy descriptions
+approval workflow issues
+refund transactions
+ERP migration inconsistencies
+personal expenses mixed with company expenses
+corrupted entries
+
+Example:
+Original rows = 18,000+
+Cleaned rows = 15,000+
+Duplicates and invalid records removed.
+
+The platform must clean the data first and then generate powerful AI-driven insights and visual dashboards.
+
+CORE APPLICATION FLOW
+
+STEP 1 — FILE UPLOAD
+
+Users can upload:
+
+.xlsx
+.csv
+
+Provide:
+
+drag-and-drop upload area
+upload progress indicator
+validation messages
+
+STEP 2 — DATA CLEANING ENGINE
+
+Automatically perform:
+
+Remove duplicate rows
+Remove empty rows
+Handle missing values
+Standardize column names
+Standardize department names
+Standardize currencies
+Detect invalid transactions
+Normalize vendors
+Detect outliers
+Remove corrupted rows
+Identify suspicious transactions
+Standardize text formatting
+Normalize date formats
+Detect inconsistent IDs
+
+Use:
+
+Pandas
+NumPy
+Regex
+AI-assisted cleaning where required
+
+STEP 3 — CLEANING SUMMARY
+
+Display detailed cleaning metrics:
+
+Total uploaded rows
+Total cleaned rows
+Duplicate rows removed
+Invalid rows removed
+Missing values fixed
+Rows excluded
+Final usable rows
+Percentage cleaned
+Data quality score
+Vendor normalization count
+Department normalization count
+
+Create KPI cards for these metrics.
+
+LLM-BASED EXPENSE CLASSIFICATION
+
+Build an AI-powered classification system.
+
+Classify every expense description into ONE category:
+
+Cloud Infrastructure
+SaaS Subscriptions
+Travel & Transport
+Meals & Catering
+Hardware & Equipment
+Finance & Banking
+Personal Expense
+Miscellaneous
+
+The AI must:
+
+use LLM reasoning
+return confidence score (0.0–1.0)
+provide brief explanation
+
+Example:
+
+Input:
+“AWS EC2 monthly billing”
+
+Output:
+{
+"category": "Cloud Infrastructure",
+"confidence": 0.97,
+"reason": "AWS EC2 billing is cloud infrastructure spend"
+}
+
+Use:
+
+OpenAI API OR Gemini API
+VENDOR NORMALIZATION ENGINE
+
+Build a vendor alias normalization system.
+
+Input:
+Raw vendor name
+
+Output:
+Canonical vendor name OR UNKNOWN
+
+Examples:
+
+"amazon web svcs" → "AWS"
+"aws cloud india" → "AWS"
+"zoom.us" → "Zoom"
+"msft" → "Microsoft"
+"uber trip" → "Uber"
+
+Also:
+
+detect duplicate vendors
+generate vendor mapping table
+standardize spellings
+identify suspicious aliases
+MAJOR FEATURE — DATA INSIGHTS DASHBOARD
+
+THIS IS THE MOST IMPORTANT PART.
+
+Generate a highly professional enterprise dashboard containing:
+
+charts
+KPI cards
+graphs
+pie charts
+donut charts
+line graphs
+bar charts
+heatmaps
+fraud indicators
+risk indicators
+executive summaries
+AI-generated insights
+recommendations
+audit observations
+
+Dashboard should look EXACTLY like a modern enterprise analytics platform.
+
+UI DESIGN REQUIREMENTS
+
+The UI should be:
+
+clean
+premium
+responsive
+enterprise-grade
+modern SaaS style
+visually polished
+
+Design inspiration:
+
+Stripe Analytics
+Power BI
+Tableau
+SAP dashboards
+Deloitte governance systems
+
+Use:
+
+React
+Tailwind CSS
+ShadCN UI
+Recharts
+Framer Motion
+Lucide Icons
+TOP NAVBAR
+
+Include:
+
+App logo/title
+Upload button
+Refresh button
+Export button
+Dark/light mode toggle
+User profile section
+HEADER SECTION
+
+Display:
+
+Title:
+“Expense Analytics Dashboard”
+
+Subtitle:
+“Corporate expense intelligence and policy monitoring”
+
+Show:
+
+data source badge
+upload timestamp
+refresh controls
+export options
+KPI CARD SECTION
+
+Create premium KPI cards like enterprise dashboards.
+
+Cards:
+
+Total Spend (INR)
+Total Transactions
+Personal Expenses
+Flagged Transactions
+Under Review
+Avg Transaction Amount
+
+Cards should have:
+
+rounded corners
+soft shadows
+hover animations
+smooth transitions
+bold typography
+color-coded metrics
+
+Color coding:
+
+Blue = informational
+Red = high risk
+Orange = warning
+Green = healthy
+DASHBOARD TAB STRUCTURE
+
+Create these tabs:
+
+Overview
+Personal Expenses
+Vendor Analysis
+Departments
+Currency
+Data Quality
+Fraud & Anomalies
+Executive Summary
+OVERVIEW TAB
+
+Show:
+
+total transactions
+total spend
+missing receipts
+flagged transactions
+currencies
+departments
+unique vendors
+spend trend over time
+receipt compliance donut chart
+monthly spend trend graph
+
+Generate AI insights:
+
+unusual spikes
+audit risks
+missing approvals
+budget burn concerns
+PERSONAL EXPENSE TAB
+
+Show:
+
+personal expense count
+top offenders
+top personal vendors
+business vs personal ratio
+policy violations
+
+Generate insights:
+
+reimbursement abuse
+employee misuse
+suspicious behavior
+policy breach indicators
+VENDOR ANALYSIS TAB
+
+Show:
+
+top vendors by spend
+SaaS concentration
+duplicate vendors
+vendor dependency
+procurement risk
+
+Generate:
+
+vendor lock-in risks
+duplicate contracts
+concentration risks
+DEPARTMENT ANALYSIS TAB
+
+Show:
+
+department-wise spend
+cost center analysis
+inconsistent department names
+missing cost centers
+
+Generate:
+
+governance observations
+allocation issues
+budget concentration insights
+CURRENCY ANALYSIS TAB
+
+Show:
+
+INR vs foreign currency spend
+forex exposure
+exchange-rate missing %
+currency distribution
+
+Generate:
+
+forex risk insights
+valuation risks
+international vendor exposure
+DATA QUALITY TAB
+
+Show:
+
+missing value heatmap
+null percentages
+incomplete records
+approval workflow gaps
+inconsistent values
+ERP readiness score
+
+Generate:
+
+governance issues
+audit concerns
+migration readiness observations
+FRAUD & ANOMALY TAB
+
+Show:
+
+suspicious transactions
+refund abuse
+high-value outliers
+duplicate reimbursements
+approval bypass patterns
+abnormal spend patterns
+
+Generate:
+
+fraud indicators
+reimbursement cycling risks
+suspicious approvals
+anomaly scoring
+EXECUTIVE SUMMARY TAB
+
+Generate a professional audit-style summary similar to:
+
+Deloitte
+EY
+PwC
+
+Include:
+
+key findings
+major risks
+recommendations
+action items
+overall risk score
+governance status
+DATA INSIGHT ENGINE
+
+Automatically generate AI insights like:
+
+“39% transactions missing receipts indicates audit compliance risk.”
+
+“USD spend concentration creates significant forex exposure.”
+
+“Multiple SaaS vendors indicate vendor lock-in risk.”
+
+“Duplicate vendor aliases suggest procurement governance issues.”
+
+VISUALIZATION REQUIREMENTS
+
+Use:
+
+Recharts OR Plotly
+
+Include:
+
+line charts
+area charts
+bar charts
+horizontal bar charts
+pie charts
+donut charts
+histograms
+heatmaps
+
+Charts must:
+
+animate smoothly
+support hover tooltips
+be interactive
+look premium
+VISUAL STYLE
+
+Use:
+
+white/light gray background
+subtle borders
+elegant spacing
+rounded cards
+soft shadows
+modern typography
+
+Color palette:
+
+blue primary
+red risks
+orange warnings
+green safe indicators
+ADVANCED FEATURES
+
+Add:
+
+downloadable cleaned Excel
+downloadable PDF audit report
+downloadable executive summary
+AI-generated recommendations
+responsive mobile layout
+animations
+loading skeletons
+toast notifications
+risk scoring
+anomaly scoring
+confidence scoring
+TECH STACK
+
+Frontend:
+
+React
+Tailwind CSS
+ShadCN UI
+Recharts
+Framer Motion
+
+Backend:
+
+FastAPI OR Flask
+
+AI:
+
+OpenAI API OR Gemini API
+
+Data Processing:
+
+Pandas
+NumPy
+Regex
+EXPECTED OUTPUT
+
+Generate COMPLETE EXPORTABLE SOURCE CODE for the entire application.
+
+DO NOT provide:
+
+pseudo code
+incomplete snippets
+explanations only
+
+Generate FULL production-ready code.

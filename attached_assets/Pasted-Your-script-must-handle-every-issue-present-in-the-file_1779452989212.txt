@@ -1,0 +1,32 @@
+Your script must handle every issue
+present in the file. At minimum:
+Date parsing. Parse both submission_date and txn_date into YYYY-MM-DD
+strings. Every date format in the file must be handled, including Unix epoch
+timestamps. If a date cannot be resolved, document why.
+Amount parsing. Extract a clean numeric float from amount_raw regardless of
+how it is encoded. Handle: currency symbols (₹, $, €, £), embedded currency
+codes in the amount field (e.g. AED 32000, SGD 7800, USD 150000), Indian
+comma notation (1,50,000, 22,00,000, 4,50,000), leading/trailing whitespace,
+non-numeric sentinels (TBD, N/A), and negative values (refunds).
+INR conversion. Convert every cleaned amount to INR using the reference
+rates above. Populate exchange_rate_used appropriately. Rows with
+unresolvable amounts must be excluded from loading and logged in the
+quality report.
+Vendor resolution. Map every vendor_raw value to its canonical name using
+the table above. For blank vendors, infer from the description and log your
+reasoning per row.
+Duplicate detection. Identify transactions that are exact or near-exact
+duplicates. Apply a documented decision rule - do not hardcode individual
+row IDs. Mark duplicates with is_duplicate = True and populate duplicate_of
+with the retained transaction's txn_ref. For ambiguous pairs where the intent is
+unclear, flag both as under_review and explain in flag_reason.
+Personal expense detection. Identify and flag personal expenses (is_personal
+= True, is_flagged = True). Write a generalised detection rule based on
+description content, not row-specific conditions.
+Department standardisation. Correct all abbreviations, typos, and case
+inconsistencies to the canonical department name from the mapping table.
+Data Quality Report. Output a quality_report.json file with the structure below.
+Every issue found must have its own entry. Severity definitions:
+CRITICAL = row cannot be loaded without manual resolution
+WARNING = row loaded under a documented assumption
+INFO = minor formatting correction applied automatically
