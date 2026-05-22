@@ -22,7 +22,7 @@ import FraudTab from "@/components/dashboard/FraudTab";
 import ExecutiveSummaryTab from "@/components/dashboard/ExecutiveSummaryTab";
 import AlertsTab from "@/components/dashboard/AlertsTab";
 import TransactionsTab from "@/components/dashboard/TransactionsTab";
-import UploadDialog from "@/components/dashboard/UploadDialog";
+import UploadDialog, { type PipelineResult } from "@/components/dashboard/UploadDialog";
 
 type NavId =
   | "overview" | "transactions" | "personal" | "vendors"
@@ -245,18 +245,6 @@ function Sidebar({ active, onNavigate, onUpload, onRefresh, refreshing, personal
   );
 }
 
-const TAB_COMPONENTS: Record<NavId, React.ReactNode> = {
-  overview: <OverviewTab />,
-  transactions: <TransactionsTab />,
-  personal: <PersonalExpensesTab />,
-  vendors: <VendorAnalysisTab />,
-  departments: <DepartmentsTab />,
-  currency: <CurrencyTab />,
-  quality: <DataQualityTab />,
-  fraud: <FraudTab />,
-  alerts: <AlertsTab />,
-  executive: <ExecutiveSummaryTab />,
-};
 
 export default function Dashboard() {
   const queryClient = useQueryClient();
@@ -264,6 +252,7 @@ export default function Dashboard() {
   const [activeNav, setActiveNav] = useState<NavId>("overview");
   const [uploadOpen, setUploadOpen] = useState(false);
   const [refreshing, setRefreshing] = useState(false);
+  const [lastUploadResult, setLastUploadResult] = useState<PipelineResult | null>(null);
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
   const [mobileOpen, setMobileOpen] = useState(false);
 
@@ -281,6 +270,12 @@ export default function Dashboard() {
     setActiveNav(id);
     setMobileOpen(false);
   }, []);
+
+  const handleUploadSuccess = useCallback((result: PipelineResult) => {
+    setLastUploadResult(result);
+    setActiveNav("overview");
+    toast({ title: "Pipeline complete", description: `${result.clean_rows.toLocaleString()} clean rows — results shown in Overview.` });
+  }, [toast]);
 
   const alertCount = 8; // static based on what AlertsTab generates
 
@@ -376,15 +371,20 @@ export default function Dashboard() {
 
         {/* Page content */}
         <main className="flex-1 overflow-y-auto p-4 md:p-6">
-          {Object.entries(TAB_COMPONENTS).map(([id, component]) => (
-            <div key={id} className={activeNav === id ? "block" : "hidden"}>
-              {component}
-            </div>
-          ))}
+          <div className={activeNav === "overview" ? "block" : "hidden"}><OverviewTab uploadResult={lastUploadResult} onUpload={() => setUploadOpen(true)} /></div>
+          <div className={activeNav === "transactions" ? "block" : "hidden"}><TransactionsTab /></div>
+          <div className={activeNav === "personal" ? "block" : "hidden"}><PersonalExpensesTab /></div>
+          <div className={activeNav === "vendors" ? "block" : "hidden"}><VendorAnalysisTab /></div>
+          <div className={activeNav === "departments" ? "block" : "hidden"}><DepartmentsTab /></div>
+          <div className={activeNav === "currency" ? "block" : "hidden"}><CurrencyTab /></div>
+          <div className={activeNav === "quality" ? "block" : "hidden"}><DataQualityTab /></div>
+          <div className={activeNav === "fraud" ? "block" : "hidden"}><FraudTab /></div>
+          <div className={activeNav === "alerts" ? "block" : "hidden"}><AlertsTab /></div>
+          <div className={activeNav === "executive" ? "block" : "hidden"}><ExecutiveSummaryTab /></div>
         </main>
       </div>
 
-      <UploadDialog open={uploadOpen} onClose={() => setUploadOpen(false)} />
+      <UploadDialog open={uploadOpen} onClose={() => setUploadOpen(false)} onSuccess={handleUploadSuccess} />
     </div>
   );
 }
