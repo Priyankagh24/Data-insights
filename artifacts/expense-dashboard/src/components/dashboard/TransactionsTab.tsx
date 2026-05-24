@@ -37,8 +37,8 @@ export default function TransactionsTab() {
     ...(search ? { search } : {}),
     ...(filterDept ? { department: filterDept } : {}),
     ...(filterCategory ? { category: filterCategory } : {}),
-    ...(filterPersonal ? { is_personal: filterPersonal === "true" } : {}),
-    ...(filterFlagged ? { is_flagged: filterFlagged === "true" } : {}),
+    ...(filterPersonal !== "" ? { is_personal: filterPersonal === "true" } : {}),
+    ...(filterFlagged !== "" ? { is_flagged: filterFlagged === "true" } : {}),
   };
 
   const { data, isLoading } = useListExpenses(params, {

@@ -6,7 +6,7 @@ import { logger } from "../lib/logger";
 const router = Router();
 const upload = multer({ storage: multer.memoryStorage(), limits: { fileSize: 100 * 1024 * 1024 } });
 
-router.post("/", upload.single("file"), (req, res) => {
+router.post("/", upload.single("file"), async (req, res) => {
   if (!req.file) {
     res.status(400).json({ success: false, message: "No file uploaded" });
     return;
@@ -16,7 +16,7 @@ router.post("/", upload.single("file"), (req, res) => {
   req.log.info({ filename: originalname, size }, "Running cleaning pipeline");
 
   try {
-    const result = runCleaningPipeline(buffer, originalname);
+    const result = await runCleaningPipeline(buffer, originalname);
     req.log.info({ clean: result.clean_rows, excluded: result.excluded_rows }, "Pipeline complete");
     res.json(result);
   } catch (err) {

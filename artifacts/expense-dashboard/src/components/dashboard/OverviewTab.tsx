@@ -28,7 +28,6 @@ import type { PipelineResult } from "./UploadDialog";
 
 interface OverviewTabProps {
   uploadResult: PipelineResult | null;
-  onUpload: () => void;
 }
 
 function SectionTitle({ children, sub }: { children: React.ReactNode; sub?: string }) {
@@ -417,27 +416,7 @@ function PipelineResultSection({ result }: { result: PipelineResult }) {
   );
 }
 
-function UploadCTA({ onUpload }: { onUpload: () => void }) {
-  return (
-    <div
-      onClick={onUpload}
-      className="rounded-xl border-2 border-dashed border-border hover:border-primary/50 hover:bg-muted/20 transition-all cursor-pointer p-8 flex flex-col items-center gap-3 text-center group"
-      data-testid="overview-upload-cta"
-    >
-      <div className="w-12 h-12 rounded-xl bg-primary/10 flex items-center justify-center group-hover:bg-primary/20 transition-colors">
-        <Upload size={22} className="text-primary" />
-      </div>
-      <div>
-        <div className="text-sm font-bold text-foreground">Upload & Clean a New File</div>
-        <p className="text-xs text-muted-foreground mt-1 max-w-sm mx-auto">
-          Drag and drop your dirty .xlsx / .csv expense export. The cleaning pipeline will parse,
-          normalise, and validate every row — results appear here, not in a popup.
-        </p>
-      </div>
-      <div className="text-xs text-primary font-semibold mt-1">Click to upload →</div>
-    </div>
-  );
-}
+
 
 // ─── Summary strip ────────────────────────────────────────────────────────────
 
@@ -471,7 +450,7 @@ function SummaryStrip() {
 
 // ─── Main export ──────────────────────────────────────────────────────────────
 
-export default function OverviewTab({ uploadResult, onUpload }: OverviewTabProps) {
+export default function OverviewTab({ uploadResult }: OverviewTabProps) {
   return (
     <div className="flex flex-col gap-6">
       {/* KPI cards */}
@@ -499,25 +478,21 @@ export default function OverviewTab({ uploadResult, onUpload }: OverviewTabProps
       </div>
 
       {/* ── Data Pipeline Section ── */}
-      <div>
-        <div className="flex items-center gap-3 mb-4">
-          <div className="flex items-center gap-2">
-            <div className="w-1 h-5 rounded-full bg-primary" />
-            <h2 className="text-sm font-bold text-foreground">Data Pipeline</h2>
-          </div>
-          {uploadResult && (
+      {uploadResult && (
+        <div>
+          <div className="flex items-center gap-3 mb-4">
+            <div className="flex items-center gap-2">
+              <div className="w-1 h-5 rounded-full bg-primary" />
+              <h2 className="text-sm font-bold text-foreground">Data Pipeline</h2>
+            </div>
             <span className="text-xs px-2 py-0.5 rounded-full bg-emerald-500/15 text-emerald-600 dark:text-emerald-400 border border-emerald-500/25 font-medium">
               Last run: {uploadResult.filename} · {uploadResult.clean_rows.toLocaleString()} clean rows
             </span>
-          )}
-        </div>
+          </div>
 
-        {uploadResult ? (
           <PipelineResultSection result={uploadResult} />
-        ) : (
-          <UploadCTA onUpload={onUpload} />
-        )}
-      </div>
+        </div>
+      )}
     </div>
   );
 }

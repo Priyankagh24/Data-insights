@@ -1,5 +1,9 @@
 import * as XLSX from "xlsx";
 import { logger } from "../lib/logger";
+import { classifyExpense, normalizeVendor } from "../lib/classifier";
+import type { ClassificationResult, NormalizationResult } from "../lib/classifier";
+import { setStore } from "./loader";
+import type { Expense, AnalyticsSummary } from "./loader";
 
 export interface PipelineResult {
   success: boolean;
@@ -119,7 +123,7 @@ function parseAmount(v: unknown): number | null {
   return isNaN(n) ? null : n;
 }
 
-function normalizeVendor(v: unknown): string {
+function sanitizeVendorRaw(v: unknown): string {
   if (!v) return "Unknown";
   return String(v).trim().replace(/\s+/g, " ").replace(/[^\w\s\-&.]/g, "").trim() || "Unknown";
 }
@@ -134,7 +138,55 @@ function detectPersonal(vendor: string, desc: string): boolean {
   return PERSONAL_KEYWORDS.some((kw) => combined.includes(kw));
 }
 
-export function runCleaningPipeline(fileBuffer: Buffer, filename: string): PipelineResult {
+const classificationCache = new Map<string, ClassificationResult>();
+const normalizationCache = new Map<string, NormalizationResult>();
+
+async function getCachedClassification(desc: string): Promise<ClassificationResult> {
+  const cacheKey = desc.trim().toLowerCase();
+  if (classificationCache.has(cacheKey)) {
+    return classificationCache.get(cacheKey)!;
+  }
+  const result = await classifyExpense(desc);
+  classificationCache.set(cacheKey, result);
+  return result;
+}
+
+async function getCachedNormalization(vendor: string): Promise<NormalizationResult> {
+  const cacheKey = vendor.trim().toLowerCase();
+  if (normalizationCache.has(cacheKey)) {
+    return normalizationCache.get(cacheKey)!;
+  }
+  const result = await normalizeVendor(vendor);
+  normalizationCache.set(cacheKey, result);
+  return result;
+}
+
+async function mapConcurrent<T, U>(
+  items: T[],
+  concurrency: number,
+  fn: (item: T, index: number) => Promise<U>
+): Promise<U[]> {
+  const results: U[] = new Array(items.length);
+  let nextIndex = 0;
+  
+  const worker = async () => {
+    while (nextIndex < items.length) {
+      const index = nextIndex++;
+      results[index] = await fn(items[index], index);
+    }
+  };
+
+  const workers = Array.from({ length: Math.min(concurrency, items.length) }, worker);
+  await Promise.all(workers);
+  return results;
+}
+
+function normalizeBoolean(v: string | unknown): boolean {
+  const s = String(v || "").trim().toLowerCase();
+  return s === "true" || s === "yes" || s === "1";
+}
+
+export async function runCleaningPipeline(fileBuffer: Buffer, filename: string): Promise<PipelineResult> {
   const start = Date.now();
   const steps: PipelineStep[] = [];
   const sampleIssues: SampleIssue[] = [];
@@ -208,15 +260,17 @@ export function runCleaningPipeline(fileBuffer: Buffer, filename: string): Pipel
     exclusionMap.set(reason, (exclusionMap.get(reason) ?? 0) + 1);
   }
 
-  let cleanCount = 0;
-  let totalSpend = 0;
-  let minDate = "9999-12-31";
-  let maxDate = "0000-01-01";
-  const vendors = new Set<string>();
-  const depts = new Set<string>();
-  const currencies = new Set<string>();
-  let personalCount = 0;
-  let missingReceiptCount = 0;
+  const cleanRowData: Array<{
+    rowNum: number;
+    row: RawRow;
+    amount: number;
+    date: string;
+    vendorRaw: string;
+    dept: string;
+    currency: string;
+    description: string;
+    receiptAttached: string;
+  }> = [];
 
   for (let i = 0; i < rawRows.length; i++) {
     const row = rawRows[i];
@@ -243,8 +297,8 @@ export function runCleaningPipeline(fileBuffer: Buffer, filename: string): Pipel
 
     // Vendor
     const rawVendor = vendorCol ? row[vendorCol] : null;
-    const vendor = normalizeVendor(rawVendor);
-    if (vendor === "Unknown" || vendor === "") {
+    const vendorCleaned = sanitizeVendorRaw(rawVendor);
+    if (vendorCleaned === "Unknown" || vendorCleaned === "") {
       exclude("Missing vendor");
       if (sampleIssues.length < 8 && !excluded) sampleIssues.push({ row: rowNum, field: vendorCol ?? "vendor", issue: "Missing vendor", value: "" });
       excluded = true;
@@ -252,29 +306,94 @@ export function runCleaningPipeline(fileBuffer: Buffer, filename: string): Pipel
 
     if (excluded) continue;
 
-    // Row is clean — compute stats
-    cleanCount++;
-    totalSpend += amount!;
-
-    if (date! < minDate) minDate = date!;
-    if (date! > maxDate) maxDate = date!;
-
-    vendors.add(vendor);
-
     const dept = normalizeDept(deptCol ? row[deptCol] : null);
-    depts.add(dept);
-
     const currency = currencyCol ? String(row[currencyCol] ?? "INR").trim().toUpperCase() || "INR" : "INR";
-    currencies.add(currency);
+    const description = String(row["description"] ?? row["desc"] ?? row["narration"] ?? "");
+    const receipt = String(receiptCol ? row[receiptCol] : "").trim();
 
-    const desc = String((row["description"] ?? row["desc"] ?? row["narration"] ?? "")).toLowerCase();
-    if (detectPersonal(vendor, desc)) personalCount++;
-
-    const receipt = String(receiptCol ? row[receiptCol] : "").toLowerCase().trim();
-    if (!receipt || receipt === "false" || receipt === "no" || receipt === "0") missingReceiptCount++;
+    cleanRowData.push({
+      rowNum,
+      row,
+      amount: amount!,
+      date: date!,
+      vendorRaw: vendorCleaned,
+      dept,
+      currency,
+      description,
+      receiptAttached: receipt
+    });
   }
 
-  const excludedCount = totalSourceRows - cleanCount;
+  const excludedCount = totalSourceRows - cleanRowData.length;
+
+  // Step 4.2: Classification and Normalization (Second Pass, Async & Concurrent)
+  const expenses = await mapConcurrent(cleanRowData, 15, async (item, idx) => {
+    const normResult = await getCachedNormalization(item.vendorRaw);
+    const classResult = await getCachedClassification(item.description);
+
+    let isPersonal = classResult.category === "Personal Expense";
+    let isFlagged = isPersonal;
+    let flagReason: string | null = null;
+
+    if (isPersonal) {
+      flagReason = "Personal Expense - Policy Violation";
+    } else if (detectPersonal(normResult.canonical_vendor, item.description)) {
+      isPersonal = true;
+      isFlagged = true;
+      flagReason = "Flagged as personal expense via keyword matching";
+    }
+
+    const receiptLower = item.receiptAttached.toLowerCase();
+    const hasReceipt = receiptLower === "true" || receiptLower === "yes" || receiptLower === "1";
+
+    const isDuplicate = normalizeBoolean(item.row["is_duplicate"]);
+    const underReview = isFlagged || isDuplicate || normalizeBoolean(item.row["under_review"]);
+
+    const expense: Expense = {
+      txn_id: String(item.row["txn_id"] || item.row["id"] || `TXN-${Date.now()}-${idx + 1}`),
+      submission_date: parseDate(item.row["submission_date"]) || item.date,
+      txn_date: item.date,
+      amount_inr: item.amount,
+      original_currency: item.currency,
+      amount_numeric: item.amount,
+      exchange_rate_used: parseAmount(item.row["exchange_rate_used"]) || 1.0,
+      vendor_canonical: normResult.canonical_vendor,
+      vendor_raw: item.vendorRaw,
+      description: item.description,
+      department: item.dept,
+      cost_center: String(item.row["cost_center"] || item.row["cc"] || "TBD"),
+      submitted_by: String(item.row["submitted_by"] || item.row["employee"] || "Unknown"),
+      receipt_attached: hasReceipt ? "Yes" : "No",
+      approval_status: String(item.row["approval_status"] || "Pending"),
+      category: classResult.category,
+      category_confidence: classResult.confidence,
+      is_personal: isPersonal,
+      is_flagged: isFlagged,
+      flag_reason: flagReason,
+      is_duplicate: isDuplicate,
+      under_review: underReview,
+      notes: String(item.row["notes"] || ""),
+    };
+
+    return expense;
+  });
+
+  const cleanCount = expenses.length;
+  const totalSpend = expenses.reduce((sum, e) => sum + e.amount_inr, 0);
+  const vendors = new Set(expenses.map(e => e.vendor_canonical));
+  const depts = new Set(expenses.map(e => e.department));
+  const currencies = new Set(expenses.map(e => e.original_currency).filter(Boolean) as string[]);
+  const personalCount = expenses.filter(e => e.is_personal).length;
+  const missingReceiptCount = expenses.filter(e => e.receipt_attached === "No").length;
+
+  let minDate = "9999-12-31";
+  let maxDate = "0000-01-01";
+  for (const e of expenses) {
+    if (e.txn_date) {
+      if (e.txn_date < minDate) minDate = e.txn_date;
+      if (e.txn_date > maxDate) maxDate = e.txn_date;
+    }
+  }
 
   // Step 5: Date normalisation
   const dateIssueRows = rawRows.filter((r) => {
@@ -291,7 +410,7 @@ export function runCleaningPipeline(fileBuffer: Buffer, filename: string): Pipel
   steps.push({ step: "Vendor Canonicalisation", status: "ok", detail: `${vendors.size} unique vendors resolved`, rows_affected: vendors.size });
 
   // Step 8: Personal expense detection
-  steps.push({ step: "Personal Expense Detection", status: personalCount > 0 ? "warn" : "ok", detail: `${personalCount.toLocaleString()} personal transactions detected via keyword matching`, rows_affected: personalCount });
+  steps.push({ step: "Personal Expense Detection", status: personalCount > 0 ? "warn" : "ok", detail: `${personalCount.toLocaleString()} personal transactions detected via keyword/LLM matching`, rows_affected: personalCount });
 
   // Step 9: Row exclusion
   const totalExcluded = excludedCount;
@@ -313,6 +432,35 @@ export function runCleaningPipeline(fileBuffer: Buffer, filename: string): Pipel
 
   const dateRange = cleanCount > 0 ? `${minDate} to ${maxDate}` : "—";
   const missingReceiptPct = cleanCount > 0 ? (missingReceiptCount / cleanCount) * 100 : 0;
+
+  const summary: AnalyticsSummary = {
+    report_date: new Date().toISOString().split("T")[0],
+    source_file: filename,
+    total_rows_in_source: totalSourceRows,
+    rows_loaded: cleanCount,
+    rows_excluded: excludedCount,
+    total_inr_spend: totalSpend,
+    personal_expense_count: personalCount,
+    personal_expense_inr: expenses.filter(e => e.is_personal).reduce((sum, e) => sum + e.amount_inr, 0),
+    duplicate_count: expenses.filter(e => e.is_duplicate).length,
+    duplicate_value_inr: expenses.filter(e => e.is_duplicate).reduce((sum, e) => sum + e.amount_inr, 0),
+    issue_summary: {
+      CRITICAL: excludedCount,
+      WARNING: personalCount + missingReceiptCount,
+      INFO: dateIssueRows + depts.size,
+    },
+    spend_by_department: expenses.reduce((acc, e) => {
+      acc[e.department] = (acc[e.department] || 0) + e.amount_inr;
+      return acc;
+    }, {} as Record<string, number>),
+    spend_by_vendor: expenses.reduce((acc, e) => {
+      acc[e.vendor_canonical] = (acc[e.vendor_canonical] || 0) + e.amount_inr;
+      return acc;
+    }, {} as Record<string, number>),
+  };
+
+  // Call setStore to update the database
+  setStore(expenses, summary);
 
   return {
     success: true,
@@ -337,3 +485,4 @@ export function runCleaningPipeline(fileBuffer: Buffer, filename: string): Pipel
     sample_issues: sampleIssues,
   };
 }
+

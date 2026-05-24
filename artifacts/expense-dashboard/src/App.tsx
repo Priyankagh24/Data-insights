@@ -4,6 +4,9 @@ import { Toaster } from "@/components/ui/toaster";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import NotFound from "@/pages/not-found";
 import Dashboard from "@/pages/dashboard";
+import UploadPage from "@/pages/upload";
+import CleaningSummaryPage from "@/pages/cleaning-summary";
+import { useSessionStore } from "@/store/useSessionStore";
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -15,9 +18,15 @@ const queryClient = new QueryClient({
 });
 
 function Router() {
+  const isFileUploaded = useSessionStore(state => state.isFileUploaded);
+
   return (
     <Switch>
-      <Route path="/" component={Dashboard} />
+      <Route path="/" component={isFileUploaded ? Dashboard : UploadPage} />
+      <Route path="/upload" component={UploadPage} />
+      <Route path="/summary" component={CleaningSummaryPage} />
+      <Route path="/cleaning-summary" component={CleaningSummaryPage} />
+      <Route path="/dashboard" component={Dashboard} />
       <Route component={NotFound} />
     </Switch>
   );

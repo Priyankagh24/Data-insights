@@ -39,8 +39,8 @@ router.get("/", (req, res) => {
   if (dept) filtered = filtered.filter((e) => e.department.toLowerCase().includes(dept.toLowerCase()));
   if (vendor) filtered = filtered.filter((e) => e.vendor_canonical.toLowerCase().includes(vendor.toLowerCase()));
   if (category) filtered = filtered.filter((e) => e.category?.toLowerCase().includes(category.toLowerCase()));
-  if (isPersonal !== undefined) filtered = filtered.filter((e) => e.is_personal === (isPersonal === "true"));
-  if (isFlagged !== undefined) filtered = filtered.filter((e) => e.is_flagged === (isFlagged === "true"));
+  if (isPersonal !== undefined && isPersonal !== "") filtered = filtered.filter((e) => e.is_personal === (isPersonal === "true"));
+  if (isFlagged !== undefined && isFlagged !== "") filtered = filtered.filter((e) => e.is_flagged === (isFlagged === "true"));
   if (search) {
     filtered = filtered.filter(
       (e) =>

@@ -161,3 +161,13 @@ export function loadData(): DataStore {
 export function getStore(): DataStore {
   return loadData();
 }
+
+export function setStore(expenses: Expense[], summary: AnalyticsSummary): void {
+  store = {
+    expenses,
+    summary,
+    loadedAt: new Date()
+  };
+  logger.info({ count: expenses.length }, "DataStore updated in memory");
+}
+
