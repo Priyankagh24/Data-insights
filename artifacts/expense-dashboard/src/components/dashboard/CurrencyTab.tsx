@@ -39,9 +39,9 @@ export default function CurrencyTab() {
     );
   }
 
-  const top10 = data.currency_breakdown.slice(0, 10);
-  const pieTop8 = data.currency_breakdown.slice(0, 8);
-  const pieOther = data.currency_breakdown.slice(8).reduce((s, c) => s + c.spend_inr, 0);
+  const top10 = (data?.currency_breakdown ?? []).slice(0, 10);
+  const pieTop8 = (data?.currency_breakdown ?? []).slice(0, 8);
+  const pieOther = (data?.currency_breakdown ?? []).slice(8).reduce((s, c) => s + c.spend_inr, 0);
   const pieData = [
     ...pieTop8.map((c, i) => ({ name: c.currency, value: c.spend_inr, color: COLORS[i] })),
     ...(pieOther > 0 ? [{ name: "Others", value: pieOther, color: "#6b7280" }] : []),

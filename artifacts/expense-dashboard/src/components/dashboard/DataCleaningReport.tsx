@@ -79,7 +79,7 @@ export const DataCleaningReport = ({
           </CardHeader>
           <CardContent>
             <div className="text-4xl font-bold text-foreground mb-2">
-              {totalRows.toLocaleString()}
+              {(totalRows ?? 0).toLocaleString()}
             </div>
             <p className="text-sm font-medium text-muted-foreground">Source rows</p>
           </CardContent>
@@ -91,7 +91,7 @@ export const DataCleaningReport = ({
           </CardHeader>
           <CardContent>
             <div className="text-4xl font-bold text-emerald-600 dark:text-emerald-400 mb-2">
-              {cleanedRows.toLocaleString()}
+              {(cleanedRows ?? 0).toLocaleString()}
             </div>
             <p className="text-sm font-medium text-emerald-700/80 dark:text-emerald-500/80">{retentionRate.toFixed(1)}% retained</p>
           </CardContent>
@@ -103,7 +103,7 @@ export const DataCleaningReport = ({
           </CardHeader>
           <CardContent>
             <div className="text-4xl font-bold text-red-600 dark:text-red-400 mb-2">
-              {removedRows.toLocaleString()}
+              {(removedRows ?? 0).toLocaleString()}
             </div>
             <p className="text-sm font-medium text-red-700/80 dark:text-red-500/80">{removalRate.toFixed(1)}% removed</p>
           </CardContent>
@@ -218,7 +218,7 @@ export const DataCleaningReport = ({
                   </div>
                   <div className="text-right">
                     <span className={`text-sm font-semibold ${severityColor}`}>
-                      {reason.count.toLocaleString()}
+                      {(reason?.count ?? 0).toLocaleString()}
                     </span>
                     <span className="text-xs font-medium text-muted-foreground ml-2">
                       ({percentage.toFixed(1)}%)
@@ -262,7 +262,7 @@ export const DataCleaningReport = ({
                 <p className="text-xs font-medium text-muted-foreground mt-0.5">{step.detail}</p>
                 {step.rows_affected && step.rows_affected > 0 && (
                   <p className="text-[10px] font-semibold text-muted-foreground mt-1 uppercase tracking-wider">
-                    Rows affected: {step.rows_affected.toLocaleString()}
+                    Rows affected: {(step?.rows_affected ?? 0).toLocaleString()}
                   </p>
                 )}
               </div>

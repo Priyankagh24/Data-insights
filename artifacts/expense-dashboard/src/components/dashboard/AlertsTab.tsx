@@ -71,7 +71,7 @@ export default function AlertsTab() {
 
   const isLoading = fraudLoading || qualityLoading || personalLoading || summaryLoading;
 
-  if (isLoading) {
+  if (isLoading || !summary) {
     return (
       <div className="flex flex-col gap-3">
         {Array.from({ length: 6 }).map((_, i) => <Skeleton key={i} className="h-24 w-full rounded-lg" />)}

@@ -84,7 +84,7 @@ const KPICard = ({ title, value, subtitle, trend, icon, color, animated = true }
     title.includes('Score') ? displayValue : 
     title.includes('Spend') ? formatINR(displayValue) :
     title.includes('Average') ? formatINR(displayValue) :
-    displayValue.toLocaleString()
+    (displayValue ?? 0).toLocaleString()
   );
 
   return (

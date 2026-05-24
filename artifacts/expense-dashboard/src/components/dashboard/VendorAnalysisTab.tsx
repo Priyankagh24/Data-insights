@@ -39,12 +39,12 @@ export default function VendorAnalysisTab() {
     );
   }
 
-  const top15 = data.top_vendors_by_spend.slice(0, 15).map((v) => ({
+  const top15 = (data?.top_vendors_by_spend ?? []).slice(0, 15).map((v) => ({
     ...v,
     spend_cr: parseFloat((v.spend_inr / 10000000).toFixed(2)),
   }));
 
-  const top8 = data.vendor_concentration.slice(0, 8);
+  const top8 = (data?.vendor_concentration ?? []).slice(0, 8);
   const top8Total = top8.reduce((s, v) => s + v.spend_inr, 0);
   const totalSpend = data.top_vendors_by_spend.reduce((s, v) => s + v.spend_inr, 0);
   const otherSpend = totalSpend - top8Total;

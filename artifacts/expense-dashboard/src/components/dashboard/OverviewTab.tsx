@@ -84,7 +84,7 @@ function DeptBarChart() {
   const { data, isLoading } = useGetSpendByDepartment({ query: { queryKey: getGetSpendByDepartmentQueryKey() } });
   if (isLoading || !data) return <Skeleton className="h-64 w-full rounded-xl" />;
   const top10 = [...data].sort((a, b) => b.spend_inr - a.spend_inr).slice(0, 10);
-  const formatted = top10.map((d) => ({ ...d, spend_cr: parseFloat((d.spend_inr / 10_000_000).toFixed(2)) }));
+  const formatted = top10.map((d) => ({ ...d, spend_cr: parseFloat(((d.spend_inr ?? 0) / 10_000_000).toFixed(2)) }));
   return (
     <CardShell>
       <SectionTitle sub="Top 10 departments by total INR spend">Spend by Department</SectionTitle>
@@ -129,7 +129,9 @@ function ReceiptComplianceChart() {
         </PieChart>
       </ResponsiveContainer>
       <div className="mt-1 text-center text-xs text-muted-foreground">
-        <span className="text-red-500 font-bold">{data.missing_pct.toFixed(1)}%</span> of transactions missing receipts
+        <span className="text-red-500 font-bold">{(data.missing_pct ?? 0).toFixed(1)}%</span>
+
+of transactions missing receipts
       </div>
     </CardShell>
   );
@@ -138,7 +140,7 @@ function ReceiptComplianceChart() {
 function TopVendorsCard() {
   const { data, isLoading } = useGetVendorAnalysis({ query: { queryKey: getGetVendorAnalysisQueryKey() } });
   if (isLoading || !data) return <Skeleton className="h-48 w-full rounded-xl" />;
-  const top6 = data.top_vendors_by_spend.slice(0, 6);
+  const top6 = (data?.top_vendors_by_spend ?? []).slice(0, 6);
   const maxSpend = top6[0]?.spend_inr ?? 1;
   return (
     <CardShell>
@@ -172,7 +174,7 @@ function PersonalExpenseBreakdownCard() {
   if (isLoading || !data) return <Skeleton className="h-48 w-full rounded-xl" />;
 
   const rate = summary ? (data.total_count / summary.total_transactions) * 100 : 0;
-  const topOffenders = data.top_offenders.slice(0, 5);
+  const topOffenders = (data?.top_offenders ?? []).slice(0, 5);
 
   return (
     <CardShell>
